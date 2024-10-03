@@ -43,6 +43,22 @@ func main() {
 		for _, hashsum := range meta.Info.PiecesHashSums() {
 			fmt.Printf("%x\n", hashsum)
 		}
+	case "peers":
+		meta, err := torrent.ParseTorrentMeta(os.Args[2])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		peers, err := torrent.PeersRequest(meta)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		for _, peer := range peers {
+			fmt.Println(peer)
+		}
 	default:
 		fmt.Println("Unknown command: " + command)
 		os.Exit(1)
