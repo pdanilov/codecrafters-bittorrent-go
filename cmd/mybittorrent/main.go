@@ -29,8 +29,15 @@ func main() {
 			return
 		}
 
-		fmt.Println("Tracker URL: ", meta.Announce)
-		fmt.Println("Length: ", meta.Info.Length)
+		hashsum, err := meta.Info.HashSum()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Printf("Tracker URL: %s\n", meta.Announce)
+		fmt.Printf("Length: %d\n", meta.Info.Length)
+		fmt.Printf("Info Hash: %x\n", hashsum)
 	default:
 		fmt.Println("Unknown command: " + command)
 		os.Exit(1)
