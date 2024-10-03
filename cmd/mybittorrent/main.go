@@ -38,6 +38,11 @@ func main() {
 		fmt.Printf("Tracker URL: %s\n", meta.Announce)
 		fmt.Printf("Length: %d\n", meta.Info.Length)
 		fmt.Printf("Info Hash: %x\n", hashsum)
+		fmt.Printf("Piece Length: %d\n", meta.Info.PieceLength)
+		fmt.Printf("Piece Hashes:\n")
+		for _, hashsum := range meta.Info.PiecesHashSums() {
+			fmt.Printf("%x\n", hashsum)
+		}
 	default:
 		fmt.Println("Unknown command: " + command)
 		os.Exit(1)
