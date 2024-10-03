@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/codecrafters-io/bittorrent-starter-go/internal/pkg/decode"
+	"github.com/codecrafters-io/bittorrent-starter-go/internal/pkg/torrent"
 )
 
 func main() {
@@ -21,6 +22,14 @@ func main() {
 
 		jsonOutput, _ := json.Marshal(decoded)
 		fmt.Println(string(jsonOutput))
+	case "info":
+		info, err := torrent.ParseTorrentInfo(os.Args[2])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Printf("Tracker URL: %s\nLength: %d\n", info.TrackerURL, info.Length)
 	default:
 		fmt.Println("Unknown command: " + command)
 		os.Exit(1)
