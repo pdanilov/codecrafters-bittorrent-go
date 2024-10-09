@@ -19,31 +19,25 @@ type MetaInfo struct {
 	Pieces      string `bencode:"pieces"`
 }
 
-func (info MetaInfo) HashSum() ([]byte, error) {
+func (info MetaInfo) HashSum() ([sha1.Size]byte, error) {
 	hash := sha1.New()
 	if err := bencode.Marshal(hash, info); err != nil {
-		return nil, err
-
+		return [sha1.Size]byte{}, err
 	}
 
-	sum := hash.Sum(nil)
+	sum := [sha1.Size]byte(hash.Sum(nil))
 	return sum, nil
 }
 
-func (info MetaInfo) PiecesHashSums() [][]byte {
-	hash := sha1.New()
-	length := int(info.PieceLength)
-	var sums [][]byte
+func (info MetaInfo) PiecesHashSums() ([][sha1.Size]byte, error) {
+	var sums [][sha1.Size]byte
 	var i int
-	for i = 0; i+length < len(info.Pieces); i += length {
-		piece := []byte(info.Pieces[i : i+length])
-		sums = append(sums, hash.Sum(piece))
-		hash.Reset()
+	pieces := []byte(info.Pieces)
+	for i = 0; i < len(pieces); i += sha1.Size {
+		sum := [sha1.Size]byte(pieces[i : i+sha1.Size])
+		sums = append(sums, sum)
 	}
-	if i < len(info.Pieces) {
-		sums = append(sums, hash.Sum([]byte(info.Pieces[i:])))
-	}
-	return sums
+	return sums, nil
 }
 
 func ParseTorrentMeta(path string) (*Meta, error) {
