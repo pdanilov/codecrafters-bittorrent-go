@@ -1,8 +1,10 @@
 package torrent
 
 import (
+	"crypto/sha1"
 	"encoding/binary"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -22,7 +24,7 @@ func PeersRequest(meta *Meta) ([]string, error) {
 	}
 
 	query := make(url.Values)
-	query.Add("info_hash", string(infoHash))
+	query.Add("info_hash", string(infoHash[:]))
 	query.Add("peer_id", "00112233445566778899")
 	query.Add("port", "6881")
 	query.Add("uploaded", "0")
@@ -55,4 +57,32 @@ func PeersRequest(meta *Meta) ([]string, error) {
 	}
 
 	return peers, nil
+}
+
+func GetPeerId(c net.Conn, info *MetaInfo) ([PeerIdSize]byte, error) {
+	hashsum, err := info.HashSum()
+	if err != nil {
+		return [PeerIdSize]byte{}, fmt.Errorf("Error calculating hashsum: %w", err)
+	}
+
+	msg := NewPeerMessage(hashsum, RandPeerId())
+	data, err := msg.MarshalBinary()
+	if err != nil {
+		return [PeerIdSize]byte{}, fmt.Errorf("Error marshaling message: %w", err)
+	}
+
+	if _, err := c.Write(data); err != nil {
+		return [PeerIdSize]byte{}, fmt.Errorf("Error sending message: %w", err)
+	}
+
+	data = make([]byte, 1+len(msg.Protocol)+8+sha1.Size+PeerIdSize)
+	if _, err := c.Read(data); err != nil {
+		return [PeerIdSize]byte{}, fmt.Errorf("Error receiving message: %w", err)
+	}
+
+	if err := msg.UnmarshalBinary(data); err != nil {
+		return [PeerIdSize]byte{}, fmt.Errorf("Error unmarshaling message: %w", err)
+	}
+
+	return msg.PeerId, nil
 }
